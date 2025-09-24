@@ -7,6 +7,7 @@ output: github_document
 
 ```{r}
 library(tidyverse)
+library(lubridate)
 ```
 
 # Problem 1
@@ -36,7 +37,8 @@ pols_df <- read_csv("data/pols-month.csv", na = c("NA", ".", "")) %>%
       TRUE ~ NA_character_
     )
   ) %>% 
-  select(-prez_dem, -prez_gop, -day)
+  select(-prez_dem, -prez_gop, -day) %>% 
+  select(year, month, everything())
 
 ```
 
@@ -88,7 +90,8 @@ une_df =
       labels = month.name,
       ordered = TRUE 
     )
-  )
+  ) %>% 
+  select(year, month, everything())
 ```
 
 ## 1.4
@@ -96,9 +99,9 @@ une_df =
 ### Join the datasets by merging snp into pols, and merging unemployment into the result.
 
 ```{r}
-overall_df <- pols_df %>%
-  full_join(snp_df, by = c("year", "month")) %>%
-  full_join(une_df, by = c("year", "month")) %>%
+overall_df <- pols_df %>% 
+  full_join(snp_df, by = c("year", "month")) %>% 
+  full_join(une_df, by = c("year", "month")) %>% 
   janitor::clean_names()
 
 ```
@@ -136,5 +139,14 @@ The combined dataset `overall_df` can be summarized with the following R functio
 summary(overall_df)
 ```
 
+### Note
 
+Create the data key.
+
+```{r}
+overall_df <- overall_df %>%
+  dplyr::mutate(date = lubridate::make_date(year, month))
+```
+
+# Problem 2
 
