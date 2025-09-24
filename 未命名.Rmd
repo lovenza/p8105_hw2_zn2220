@@ -16,13 +16,19 @@ library(tidyverse)
 First, clean the data in pols-month.csv. Use separate() to break up the variable mon into integer variables year, month, and day; replace month number with month name; create a president variable taking values gop and dem, and remove prez_dem and prez_gop; and remove the day variable.
 
 ```{r}
-pols_df = 
-  read_csv("data/pols-month.csv", na = c("NA", ".", "")) %>% 
+pols_df <- read_csv("data/pols-month.csv", na = c("NA", ".", "")) %>% 
   janitor::clean_names() %>% 
   separate(
     mon, into = c("year", "month", "day"), sep = "-"
   ) %>% 
-  mutate(month = month.name[as.integer(month)]) %>% 
+  mutate(
+    year = as.integer(year),
+    month = factor(
+      month.name[as.integer(month)],
+      levels = month.name,
+      ordered = TRUE
+    )
+  ) %>% 
   mutate(
     president = case_when(
       prez_dem == 1 ~ "dem",
@@ -31,6 +37,7 @@ pols_df =
     )
   ) %>% 
   select(-prez_dem, -prez_gop, -day)
+
 ```
 
 ## 1.2
@@ -49,11 +56,14 @@ snp_df =
       as.integer(year) <= 15,
       as.integer(year) + 2000,
       as.integer(year) + 1900
+    ),
+    month = factor(
+      month.name[as.integer(month)], 
+      levels = month.name, ordered = TRUE
     )
   ) %>% 
   select(-day) %>% 
   arrange(year, month) %>% 
-  mutate(month = month.name[as.integer(month)]) %>% 
   select(year, month, everything())
 
 ```
@@ -81,9 +91,17 @@ une_df =
   )
 ```
 
+## 1.4
 
+Join the datasets by merging snp into pols, and merging unemployment into the result.
 
+```{r}
+overall_df <- pols_df %>%
+  full_join(snp_df, by = c("year", "month")) %>%
+  full_join(une_df, by = c("year", "month")) %>%
+  janitor::clean_names()
 
+```
 
 
 
