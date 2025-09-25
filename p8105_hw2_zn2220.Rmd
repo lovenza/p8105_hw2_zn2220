@@ -212,7 +212,7 @@ common_cols <- c("dumpster","month","year","date",
                  "weight_tons","volume_cubic_yards",
                  "plastic_bottles","polystyrene","cigarette_butts",
                  "glass_bottles","plastic_bags","wrappers",
-                 "sports_balls","homes_powered")
+                 "sports_balls","homes_powered", "wheel")
 
 mtw_df <- mtw_df %>% mutate(year = as.integer(year))
 ptw_df <- ptw_df %>% mutate(year = as.integer(year))
@@ -226,7 +226,17 @@ wheelall_df <- bind_rows(mtw_df, ptw_df, gtw_df) %>%
   filter(!is.na(date))
 ```
 
+## 2.3
 
+### Write a paragraph about these data; you are encouraged to use inline R. Be sure to note the number of observations in the resulting dataset, and give examples of key variables. For available data, what was the total weight of trash collected by Professor Trash Wheel? What was the total number of cigarette butts collected by Gwynnda in June of 2022?
+
+The combined dataset of Trash Wheel collections contains `r nrow(wheelall_df)` observations, with key variables including:
+
+```{r}
+names(wheelall_df)
+```
+
+Professor Trash Wheel collected a total of `r sum(wheelall_df$weight_tons[wheelall_df$wheel == "Professor Trash Wheel"])` tons of trash. In addition, Gwynnda Trash Wheel collected `r sum(wheelall_df$cigarette_butts[wheelall_df$wheel == "Gwynnda Trash Wheel" & wheelall_df$year == 2022 & wheelall_df$month == "June"])` cigarette butts in June of 2022.
 
 
 
