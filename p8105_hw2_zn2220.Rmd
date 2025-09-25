@@ -238,6 +238,87 @@ names(wheelall_df)
 
 Professor Trash Wheel collected a total of `r sum(wheelall_df$weight_tons[wheelall_df$wheel == "Professor Trash Wheel"])` tons of trash. In addition, Gwynnda Trash Wheel collected `r sum(wheelall_df$cigarette_butts[wheelall_df$wheel == "Gwynnda Trash Wheel" & wheelall_df$year == 2022 & wheelall_df$month == "June"])` cigarette butts in June of 2022.
 
+# Problem 3
+
+## 3.1
+
+### Create a single, well-organized dataset with all the information contained in these data files. To that end: import, clean, tidy, and otherwise wrangle each of these datasets; check for completeness and correctness across datasets (e.g. by viewing individual datasets and monitoring warning messages); merge to create a single, final dataset; and organize this so that variables and observations are in meaningful orders.
+
+Clean and see.
+
+```{r}
+zc_df <- read_csv("data/Zip Codes.csv", na = c("NA", ".", "")) %>%
+  janitor::clean_names()
+
+nyc_df <- read_csv("data/Zip_zori_uc_sfrcondomfr_sm_month_NYC.csv", na = c("NA", ".", "")) %>%
+  janitor::clean_names()
+
+glimpse(zc_df)
+glimpse(nyc_df)
+```
+
+Transformation
+
+```{r}
+length(unique(zc_df$zip_code))
+length(unique(nyc_df$region_name))
+
+zc_df <- zc_df %>%
+  mutate(zip_code = as.character(zip_code))
+
+nyc_df <- nyc_df %>%
+  rename(zip_code = region_name) %>%
+  mutate(zip_code = as.character(zip_code))
+
+common_zips <- intersect(zc_df$zip_code, nyc_df$zip_code)
+length(common_zips)
+
+setdiff(nyc_df$zip_code, zc_df$zip_code)
+
+```
+
+Combination.
+
+```{r}
+tidy_df <- nyc_df %>%
+  left_join(zc_df, by = "zip_code")
+
+tidy_df <- tidy_df %>%
+  relocate(zip_code, city, county, state, .before = 1)
+
+glimpse(tidy_df)
+summary(tidy_df)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
