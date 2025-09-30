@@ -18,7 +18,7 @@ library(haven)
 
 ### First, clean the data in pols-month.csv. Use separate() to break up the variable mon into integer variables year, month, and day; replace month number with month name; create a president variable taking values gop and dem, and remove prez_dem and prez_gop; and remove the day variable.
 
-```{r}
+```{r message=FALSE}
 pols_df <- read_csv("data/pols-month.csv", na = c("NA", ".", "")) %>% 
   janitor::clean_names() %>% 
   separate(
@@ -41,14 +41,17 @@ pols_df <- read_csv("data/pols-month.csv", na = c("NA", ".", "")) %>%
   ) %>% 
   select(-prez_dem, -prez_gop, -day) %>% 
   select(year, month, everything())
+```
 
+```{r}
+pols_df
 ```
 
 ## 1.2
 
 ### Second, clean the data in snp.csv using a similar process to the above. For consistency across datasets, arrange according to year and month, and organize so that year and month are the leading columns.
 
-```{r}
+```{r message=FALSE}
 snp_df = 
   read_csv("data/snp.csv", na = c("NA", ".", "")) %>% 
   janitor::clean_names() %>% 
@@ -69,14 +72,17 @@ snp_df =
   select(-day) %>% 
   arrange(year, month) %>% 
   select(year, month, everything())
+```
 
+```{r}
+snp_df
 ```
 
 ## 1.3
 
 ### Third, tidy the unemployment data so that it can be merged with the previous datasets. This process will involve switching from “wide” to “long” format; ensuring that key variables have the same name; and ensuring that key variables take the same values.
 
-```{r}
+```{r message=FALSE}
 une_df = 
   read_csv("data/unemployment.csv", na = c("NA", ".", "")) %>%
   janitor::clean_names() %>%
@@ -94,6 +100,10 @@ une_df =
     )
   ) %>% 
   select(year, month, everything())
+```
+
+```{r}
+une_df
 ```
 
 ## 1.4
@@ -158,7 +168,7 @@ overall_df <- overall_df %>%
 
 ```{r}
 mtw_df <- read_excel(
-  "data/202409 Trash Wheel Collection Data.xlsx",
+  "data/202509 Trash Wheel Collection Data.xlsx",
   sheet = "Mr. Trash Wheel",
   skip = 1
 ) %>%
@@ -178,7 +188,7 @@ mtw_df <- read_excel(
 
 ```{r}
 ptw_df <- read_excel(
-  "data/202409 Trash Wheel Collection Data.xlsx",
+  "data/202509 Trash Wheel Collection Data.xlsx",
   sheet = "Professor Trash Wheel",
   skip = 1
 ) %>%
@@ -191,8 +201,8 @@ ptw_df <- read_excel(
   )
 
 gtw_df <- read_excel(
-  "data/202409 Trash Wheel Collection Data.xlsx",
-  sheet = "Gwynnda Trash Wheel",
+  "data/202509 Trash Wheel Collection Data.xlsx",
+  sheet = "Gwynns Falls Trash Wheel",
   skip = 1
 ) %>%
   select(-starts_with("...")) %>%
