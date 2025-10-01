@@ -244,38 +244,41 @@ Professor Trash Wheel collected a total of `r sum(wheelall_df$weight_tons[wheela
 Clean and see, Transformation and Combination.
 
 ```{r message=FALSE}
-zillow_df <- read_csv("data/Zip_zori_uc_sfrcondomfr_sm_month_NYC.csv")
-zip_codes_df <- read_csv("data/Zip Codes.csv")
-
-zori_tidy <- zillow_df |>
+final_data <- read_csv("data/Zip_zori_uc_sfrcondomfr_sm_month_NYC.csv") %>%
   pivot_longer(
     cols = starts_with("20"),
-    names_to = "date",
-    values_to = "zori"
-  ) |>
-  mutate(
-    date = ymd(date),
-    zip_code = as.character(RegionName)
-  ) |>
-  select(zip_code, date, zori)
-
-zip_info_tidy <- zip_codes_df |>
-  janitor::clean_names() |>
-  mutate(zip_code = as.character(zip_code))
-
-nyc_zori_final <- left_join(zori_tidy, zip_info_tidy, by = "zip_code") |>
-  select(zip_code, county, neighborhood, date, zori) |>
-  arrange(zip_code, date)
+    names_to = "period",
+    values_to = "value"
+  ) %>%
+  transmute(
+    postal_code = as.character(RegionName),
+    period = ymd(period),
+    value
+  ) %>%
+  left_join(
+    read_csv("data/Zip Codes.csv") %>%
+      clean_names() %>%
+      mutate(postal_code = as.character(zip_code)),
+    by = "postal_code"
+  ) %>%
+  select(
+    postal_code,
+    borough = county,
+    area = neighborhood,
+    period,
+    value
+  ) %>%
+  arrange(postal_code, period)
 ```
 
 ## 3.2
 
 ### Briefly describe the resulting tidy dataset. How many total observations exist? How many unique ZIP codes are included, and how many unique neighborhoods?
 
-The resulting tidy dataset combines rental price data with geographic information for New York City. Each observation represents the Zillow Observed Rent Index for a single ZIP code on a given month. The dataset includes a total of `r nrow(nyc_zori_final)` observations. It covers `r n_distinct(nyc_zori_final$zip_code)` unique ZIP codes and `r n_distinct(nyc_zori_final$neighborhood)` unique neighborhoods across the five boroughs. Key variables include zip_code, county, neighborhood, date, and the rental index zori. Specifically:
+The resulting tidy dataset combines rental index data with geographic information for New York City. Each observation represents the rental index for a single postal code in a given month. The dataset includes a total of `r nrow(final_data)` observations. It covers `r n_distinct(final_data$postal_code)` unique postal codes and `r n_distinct(final_data$area)` unique areas (neighborhoods). Key variables include postal_code, borough, area, period, and the rental index value.
 
 ```{r}
-glimpse(nyc_zori_final)
+glimpse(final_data)
 ```
 
 ## 3.3
@@ -283,8 +286,12 @@ glimpse(nyc_zori_final)
 ### Which ZIP codes appear in the ZIP code dataset but not in the Zillow Rental Price dataset? Using a few illustrative examples discuss why these ZIP codes might be excluded from the Zillow dataset.
 
 ```{r}
-missing_zips <- anti_join(zip_info_tidy, zori_tidy, by = "zip_code")
-missing_zips
+zips_missing <- read_csv("data/Zip Codes.csv") %>%
+  clean_names() %>%
+  mutate(postal_code = as.character(zip_code)) %>%
+  anti_join(final_data, by = "postal_code")
+
+zips_missing
 ```
 
 Some ZIP codes appear in the reference file but not in Zillow’s rental dataset because they do not represent active residential markets. In many cases these areas are primarily commercial or industrial, or they contain very few rental properties, making it difficult for Zillow to calculate a reliable rent index. In other instances, the ZIP codes may be newly created or used mainly for postal delivery rather than for households. Finally, the scope of the Zillow dataset is limited to neighborhoods where sufficient rental activity is observed, so ZIP codes outside the core residential areas of New York City are naturally excluded.
@@ -294,28 +301,21 @@ Some ZIP codes appear in the reference file but not in Zillow’s rental dataset
 ### Rental prices fluctuated dramatically during the COVID-19 pandemic. For all available ZIP codes, compare rental prices in January 2021 to prices in January 2020. Make a table that shows the 10 ZIP codes (along with the borough and neighborhood) with largest drop in price from January 2020 to 2021. Comment.
 
 ```{r}
-price_drop_df <- nyc_zori_final |>
-  filter(
-    date == ymd("2020-01-31") | date == ymd("2021-01-31")
-  ) |>
+top10_drop <- final_data %>%
+  filter(period %in% c(ymd("2020-01-31"), ymd("2021-01-31"))) %>%
   pivot_wider(
-    names_from = date,
-    values_from = zori
-  ) |>
-  janitor::clean_names() |>
-  mutate(
-    price_drop = x2020_01_31 - x2021_01_31
-  ) |>
-  drop_na(price_drop)
-
-top_10_drops <- price_drop_df |>
-  arrange(desc(price_drop)) |>
-  head(10) |>
-  select(zip_code, county, neighborhood, price_drop)
+    names_from = period,
+    values_from = value
+  ) %>%
+  mutate(rent_drop = `2020-01-31` - `2021-01-31`) %>%
+  drop_na(rent_drop) %>%
+  arrange(desc(rent_drop)) %>%
+  head(10) %>%
+  select(postal_code, borough, area, rent_drop)
 
 kable(
-  top_10_drops,
-  col.names = c("ZIP Code", "County", "Neighborhood", "Price Drop ($)"),
+  top10_drop,
+  col.names = c("ZIP Code", "Borough", "Neighborhood", "Rent Drop ($)"),
   caption = "Top 10 ZIP Codes by Largest Rent Decrease (Jan 2020 to Jan 2021)",
   digits = 2
 )
